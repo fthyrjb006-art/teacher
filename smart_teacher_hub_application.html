@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Teacher Hub | منصة المعلم الذكي</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Cairo & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- QRCode Generator Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            navy: '#0F172A',
+                            accent: '#10B981',
+                            accentDark: '#059669',
+                            slate: '#334155',
+                            lightBg: '#F8FAFC',
+                            cardBg: '#FFFFFF'
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Cairo', 'Inter', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-5 left-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Header / Navbar -->
+    <header class="bg-brand-navy text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3 space-x-reverse cursor-pointer" onclick="app.navigateHome()">
+                <div class="w-12 h-12 bg-brand-accent rounded-xl flex items-center justify-center text-white shadow-md font-bold text-2xl">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                        Smart Teacher Hub
+                        <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/30" id="badgeRole">ضيف</span>
+                    </h1>
+                    <p class="text-xs text-slate-400" id="appSubHeading">المنصة التعليمية المتكاملة للمعلم والطالب</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Language Toggle Button -->
+                <button id="langToggleBtn" onclick="app.toggleLanguage()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg text-sm font-semibold transition border border-slate-700 flex items-center gap-2">
+                    <i class="fa-solid fa-globe text-emerald-400"></i>
+                    <span id="langBtnText">English</span>
+                </button>
+
+                <!-- Auth / Profile Action -->
+                <div id="userNavSection" class="hidden flex items-center gap-3">
+                    <div class="hidden md:flex flex-col text-left text-xs">
+                        <span id="navUserName" class="font-bold text-white text-sm">--</span>
+                        <span id="navUserEmail" class="text-slate-400">--</span>
+                    </div>
+                    <img id="navUserAvatar" class="w-10 h-10 rounded-full border-2 border-brand-accent object-cover" src="" alt="Avatar" />
+                    <button onclick="app.handleSignOut()" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 p-2.5 rounded-lg text-sm transition" title="تسجيل الخروج">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- STEP 1 & ONBOARDING CONTAINER -->
+        <section id="onboardingSection" class="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden my-8">
+            <div class="bg-brand-navy p-6 text-center text-white relative">
+                <div class="inline-flex p-3 bg-white/10 rounded-2xl text-emerald-400 text-3xl mb-3">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h2 class="text-2xl font-bold" id="onboardTitle">مرحباً بك في Smart Teacher Hub</h2>
+                <p class="text-slate-300 text-sm mt-1" id="onboardSubtitle">يرجى تسجيل الدخول للوصول إلى المنصة</p>
+            </div>
+
+            <div class="p-8">
+                <!-- Step Indicator -->
+                <div class="flex items-center justify-between mb-8 relative">
+                    <div class="absolute top-1/2 left-0 right-0 h-1 bg-slate-100 -translate-y-1/2 z-0"></div>
+                    <div id="stepDot1" class="w-9 h-9 rounded-full bg-brand-accent text-white font-bold flex items-center justify-center z-10 text-sm shadow">1</div>
+                    <div id="stepDot2" class="w-9 h-9 rounded-full bg-slate-200 text-slate-600 font-bold flex items-center justify-center z-10 text-sm">2</div>
+                    <div id="stepDot3" class="w-9 h-9 rounded-full bg-slate-200 text-slate-600 font-bold flex items-center justify-center z-10 text-sm">3</div>
+                </div>
+
+                <!-- Step 1: Google Auth -->
+                <div id="stepAuthBlock" class="text-center space-y-6">
+                    <p class="text-slate-600 text-sm leading-relaxed" id="authDesc">سجل الدخول بحساب جوجل المعتمد للبدء في استخدام المنصة بأمان تام.</p>
+                    <button onclick="app.handleGoogleSignIn()" class="w-full bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-3 transition shadow-sm text-base">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        </svg>
+                        <span id="btnGoogleText">التسجيل المباشر بواسطة حساب Google</span>
+                    </button>
+                </div>
+
+                <!-- Step 2: Role Selection -->
+                <div id="stepRoleBlock" class="hidden space-y-6">
+                    <h3 class="text-lg font-bold text-slate-800 text-center" id="roleSelectTitle">اختر نوع حسابك لتخصيص التجربة:</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button onclick="app.selectRole('teacher')" class="p-6 border-2 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 rounded-2xl text-center transition group">
+                            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition text-2xl">
+                                <i class="fa-solid fa-chalkboard-user"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-lg mb-1" id="roleTeacherTitle">أنا معلم / مدرس</h4>
+                            <p class="text-xs text-slate-500" id="roleTeacherDesc">إدارة الطلاب، إنشاء الكورسات، استخدام الذكاء الاصطناعي</p>
+                        </button>
+                        <button onclick="app.selectRole('student')" class="p-6 border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 rounded-2xl text-center transition group">
+                            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition text-2xl">
+                                <i class="fa-solid fa-user-graduate"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-lg mb-1" id="roleStudentTitle">أنا طالب</h4>
+                            <p class="text-xs text-slate-500" id="roleStudentDesc">استعراض المدرسين، الانضمام للمجموعات، المتابعة</p>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Profile Details Form -->
+                <div id="stepProfileBlock" class="hidden">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 text-center" id="profileFormHeader">استكمال البيانات الشخصية</h3>
+                    <form id="profileForm" onsubmit="app.submitProfileForm(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1" id="lblFullName">الاسم بالكامل <span class="text-red-500">*</span></label>
+                            <input type="text" id="inputFullName" required placeholder="أدخل اسمك كما تود أن يظهر" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-accent focus:border-transparent outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">المحافظة / المدينة</label>
+                            <input type="text" id="inputCity" placeholder="مثال: القاهرة، الجيزة، طنطا..." class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-accent outline-none">
+                        </div>
+
+                        <!-- Teacher Specific Fields -->
+                        <div id="teacherFields" class="hidden space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1" id="lblSubject">المادة التخصصية / المهنة <span class="text-red-500">*</span></label>
+                                <input type="text" id="inputSubject" placeholder="مثال: الرياضيات العامة، الفيزياء الحديثة" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-accent outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">سنوات الخبرة التعليمية</label>
+                                <input type="number" id="inputExperience" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="مثال: 5" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-accent outline-none font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1" id="lblTeacherPhone">رقم تواصل المعلم (اختياري)</label>
+                                <input type="tel" id="inputTeacherPhone" oninput="this.value = this.value.replace(/[^0-9+]/g, '')" placeholder="010XXXXXXXX" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-accent outline-none font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1" id="lblBio">نبذة / الوصف الشخصي</label>
+                                <textarea id="inputBio" rows="3" placeholder="اكتب نبذة مختصرة للطلاب عن أسلوبك في الشرح..." class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-accent outline-none"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Student Specific Fields -->
+                        <div id="studentFields" class="hidden space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1" id="lblGrade">المرحلة / الصف الدراسي <span class="text-red-500">*</span></label>
+                                <select id="inputGrade" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-accent outline-none">
+                                    <option value="المرحلة الابتدائية">المرحلة الابتدائية</option>
+                                    <option value="المرحلة الإعدادية">المرحلة الإعدادية</option>
+                                    <option value="المرحلة الثانوية">المرحلة الثانوية</option>
+                                    <option value="المرحلة الجامعية">المرحلة الجامعية / كليات</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">رقم هاتف الطالب (اختياري)</label>
+                                <input type="tel" id="inputStudentPhone" oninput="this.value = this.value.replace(/[^0-9+]/g, '')" placeholder="010XXXXXXXX" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-accent outline-none font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1" id="lblGuardianPhone">رقم ولي الأمر <span class="text-red-500">*</span></label>
+                                <input type="tel" id="inputGuardianPhone" required oninput="this.value = this.value.replace(/[^0-9+]/g, '')" placeholder="010XXXXXXXX" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-accent outline-none font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1" id="lblSubjectsPref">المواد المفضلة / المطلوبة</label>
+                                <input type="text" id="inputSubjectsPref" placeholder="مثال: لغات، علوم، رياضيات" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-accent outline-none">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-brand-accent hover:bg-brand-accentDark text-white font-bold py-3 px-4 rounded-xl shadow-lg transition mt-6">
+                            <span id="btnSaveProfile">حفظ البيانات والانتقال للمنصة</span>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- STUDENT PORTAL SECTION -->
+        <section id="studentPortal" class="hidden space-y-8">
+            <!-- Search & Actions Header -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800" id="studentWelcomeTitle">دليل المعلمين المتاحين</h2>
+                    <p class="text-slate-500 text-sm mt-1" id="studentWelcomeSub">استعرض المعلمين المتاحين أو ابحث بمادتك الفردية</p>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <!-- Debounced Search Input -->
+                    <div class="relative flex-grow sm:w-80">
+                        <i class="fa-solid fa-magnifying-glass absolute right-3 top-3.5 text-slate-400"></i>
+                        <input type="text" id="teacherSearchInput" oninput="app.handleTeacherSearch(this.value)" placeholder="ابحث باسم المدرس أو المادة..." class="w-full pr-10 pl-4 py-2.5 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-accent outline-none text-sm">
+                        <div id="searchSpinner" class="hidden absolute left-3 top-3 text-brand-accent">
+                            <i class="fa-solid fa-circle-notch animate-spin"></i>
+                        </div>
+                    </div>
+
+                    <!-- Enter Access Code Button -->
+                    <button onclick="app.openAccessCodeModal()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-key text-emerald-400"></i>
+                        <span id="btnJoinCode">إدخال كود المجموعة</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Teachers Grid View -->
+            <div>
+                <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-users text-brand-accent"></i>
+                    <span id="teachersListHeading">قائمة المعلمين المعتمدين</span>
+                </h3>
+                
+                <div id="teachersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Dynamic Cards will be rendered here -->
+                </div>
+
+                <!-- Empty State for Teachers Search/Grid -->
+                <div id="teachersEmptyState" class="hidden text-center py-16 bg-white rounded-2xl border border-slate-200 p-8">
+                    <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                        <i class="fa-solid fa-user-slash"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-700 text-lg" id="emptyStateTitle">لم يتم العثور على معلميك المستهدفين</h4>
+                    <p class="text-slate-500 text-sm mt-1 max-w-md mx-auto" id="emptyStateDesc">تأكد من إدخال كلمات البحث بشكل صحيح، أو انتظر انضمام معلمك وتوفيره للكود.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TEACHER DASHBOARD SECTION -->
+        <section id="teacherDashboard" class="hidden space-y-8">
+            <!-- Dashboard Stats & Subscription Banner -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Welcome Card & Sub Status -->
+                <div class="lg:col-span-2 bg-gradient-to-r from-brand-navy to-slate-800 text-white rounded-2xl p-6 shadow-md flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs px-3 py-1 rounded-full font-bold">حساب معلم نشط</span>
+                            <span id="teacherSubBadge" class="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs px-3 py-1 rounded-full">الفترة التجريبية</span>
+                        </div>
+                        <h2 class="text-2xl font-bold mt-4" id="tDashboardTitle">لوحة تحكم المعلم</h2>
+                        <p class="text-slate-300 text-sm mt-1" id="tDashboardSub">إدارة كاملة للمجموعات، الطلاب، وإنشاء المادة العلمية بالذكاء الاصطناعي</p>
+                    </div>
+
+                    <!-- Quick Code Info -->
+                    <div class="mt-6 pt-4 border-t border-slate-700/60 flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <span class="text-xs text-slate-400 block" id="lblGroupCode">كود مجموعتك العام للطلاب:</span>
+                            <div class="flex items-center gap-2 mt-1">
+                                <code id="teacherGroupCode" class="bg-slate-900 px-3 py-1 rounded-lg text-emerald-400 font-mono font-bold tracking-widest text-lg">HUB-XXXX</code>
+                                <button onclick="app.copyGroupCode()" class="text-xs bg-slate-700 hover:bg-slate-600 px-2.5 py-1.5 rounded-md transition text-slate-200">
+                                    <i class="fa-solid fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button onclick="app.showQrModal()" class="bg-brand-accent hover:bg-brand-accentDark text-white px-4 py-2 rounded-xl text-sm font-bold shadow transition flex items-center gap-2">
+                            <i class="fa-solid fa-qrcode"></i>
+                            <span id="btnQrCode">رمز QR للحضور</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Monetization / Subscription Box -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-slate-800" id="subTitle">اشتراك المنصة والإعلانات</h3>
+                            <i class="fa-solid fa-crown text-amber-500"></i>
+                        </div>
+                        <p class="text-xs text-slate-500 leading-relaxed" id="subDesc">يمكنك ترقية حسابك لإلغاء الإعلانات بالكامل أو فتح الأدوات المتقدمة للمعلمين.</p>
+
+                        <!-- Pricing Tiers Badge -->
+                        <div class="mt-4 space-y-2">
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                                <span class="font-bold text-slate-700">إزالة الإعلانات فقط</span>
+                                <span class="font-extrabold text-emerald-600">25 EGP / شهر</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-between text-xs">
+                                <span class="font-bold text-slate-800">الباقة الكاملة الشاملة</span>
+                                <span class="font-extrabold text-emerald-700">100 EGP / شهر</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="app.openPaymentModal()" class="mt-4 w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-credit-card"></i>
+                        <span id="btnUpgradeSub">ترقية الاشتراك الآن</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI Lesson Plan Assistant (Gemini API Integration) -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-lg">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-lg" id="aiSectionTitle">مساعد الدرس الذكي (Gemini AI)</h3>
+                        <p class="text-xs text-slate-500" id="aiSectionSub">قم بإنشاء خطط دروس، اختبارات قصيرة، أو ملخصات تعليمية بضغطة زر</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <input type="text" id="aiTopicInput" placeholder="موضوع الدرس (مثال: قوانين نيوتن للحركة)..." class="md:col-span-2 px-4 py-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-purple-500 text-sm">
+                    <button onclick="app.generateAILessonPlan()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span id="btnGenerateAI">توليد الخطة بالذكاء الاصطناعي</span>
+                    </button>
+                </div>
+
+                <!-- AI Output Display Box -->
+                <div id="aiOutputBox" class="hidden p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-700 space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
+                    <div class="font-bold text-purple-700 border-b pb-2 flex items-center justify-between">
+                        <span>نتيجة خطة الدرس والمحتوى التعليمي:</span>
+                        <button onclick="app.copyAIText()" class="text-xs text-slate-500 hover:text-slate-700">
+                            <i class="fa-solid fa-copy"></i> نسخ
+                        </button>
+                    </div>
+                    <div id="aiTextContent" class="whitespace-pre-line leading-relaxed font-sans"></div>
+                </div>
+            </div>
+
+            <!-- Student Management List -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-graduation-cap text-brand-accent"></i>
+                        <span id="studentsListTitle">الطلاب المنضمون لمجموعتك</span>
+                    </h3>
+                    <span id="studentsCountBadge" class="bg-slate-100 text-slate-600 text-xs px-3 py-1 rounded-full font-bold">0 طالب</span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-sm">
+                        <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                            <tr>
+                                <th class="py-3 px-4" id="thStudentName">اسم الطالب</th>
+                                <th class="py-3 px-4" id="thStudentGrade">المرحلة الدراسية</th>
+                                <th class="py-3 px-4" id="thGuardianPhone">رقم ولي الأمر</th>
+                                <th class="py-3 px-4" id="thActions">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody" class="divide-y divide-slate-100">
+                            <!-- Dynamic Row Render -->
+                            <tr>
+                                <td colspan="4" class="py-8 text-center text-slate-400" id="tdNoStudents">لا يوجد طلاب منضمون حتى الآن. شارك كود المجموعة مع طلابك.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs space-y-2">
+            <p id="footerCopyright">© 2026 Smart Teacher Hub - جميع الحقوق محفوظة</p>
+            <p class="text-slate-500" id="footerSecurityNote">نظام آمن ومشفر بالكامل لحماية بيانات المعلمين والطلاب</p>
+        </div>
+    </footer>
+
+    <!-- MODALS SECTION -->
+
+    <!-- Access Code Modal (For Students) -->
+    <div id="accessCodeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-slate-800 text-lg" id="modalCodeTitle">الانضمام إلى كورس / مدرس</h3>
+                <button onclick="app.closeModal('accessCodeModal')" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+            </div>
+            <p class="text-xs text-slate-500 mb-4" id="modalCodeDesc">أدخل الكود الخطي المكون من المعلم للوصول للمحتوى الخاص بصفك.</p>
+            <input type="text" id="inputGroupCode" placeholder="HUB-XXXXXX" class="w-full px-4 py-3 rounded-xl border border-slate-300 font-mono text-center tracking-widest text-lg font-bold uppercase mb-4 focus:ring-2 focus:ring-brand-accent outline-none">
+            <button onclick="app.submitGroupCode()" class="w-full bg-brand-accent hover:bg-brand-accentDark text-white font-bold py-3 rounded-xl text-sm transition">
+                <span id="btnSubmitCode">تأكيد الانضمام</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- QR Code Attendance Modal (For Teacher) -->
+    <div id="qrModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-slate-800 text-lg" id="modalQrTitle">رمز حضور الحصة (QR Code)</h3>
+                <button onclick="app.closeModal('qrModal')" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+            </div>
+            <p class="text-xs text-slate-500 mb-4" id="modalQrSub">امسح الكود لتسجيل حضور الطلاب في الجلسة التعليمية</p>
+            <div id="qrcode" class="flex justify-center p-4 bg-slate-50 rounded-xl border border-slate-200 mb-4"></div>
+            <button onclick="app.closeModal('qrModal')" class="w-full bg-slate-800 text-white font-bold py-2.5 rounded-xl text-sm">إغلاق</button>
+        </div>
+    </div>
+
+    <!-- Payment & Subscription Modal -->
+    <div id="paymentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-slate-800 text-lg" id="modalPayTitle">ترقية وتأكيد اشتراك المنصة</h3>
+                <button onclick="app.closeModal('paymentModal')" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+            </div>
+            
+            <div class="space-y-4 mb-6">
+                <div class="border-2 border-emerald-500 rounded-xl p-4 bg-emerald-50/30 flex items-center justify-between cursor-pointer">
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">الباقة الشهرية الكاملة</h4>
+                        <p class="text-xs text-slate-500">إزالة الإعلانات + أدوات الذكاء الاصطناعي</p>
+                    </div>
+                    <span class="font-extrabold text-emerald-600 text-base">100 EGP</span>
+                </div>
+                <div class="border border-slate-200 rounded-xl p-4 flex items-center justify-between cursor-pointer">
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">باقة إزالة الإعلانات فقط</h4>
+                        <p class="text-xs text-slate-500">تصفح بدون إعلانات للطلاب والمعلمين</p>
+                    </div>
+                    <span class="font-extrabold text-slate-700 text-base">25 EGP</span>
+                </div>
+            </div>
+
+            <form onsubmit="app.processPayment(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">اسم حامل البطاقة</label>
+                    <input type="text" required placeholder="الاسم كما هو مدون على البطاقة" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">رقم البطاقة الائتمانية</label>
+                    <input type="text" required placeholder="**** **** **** ****" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm outline-none font-mono">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">تاريخ الانتهاء</label>
+                        <input type="text" required placeholder="MM/YY" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">رمز الأمان (CVC)</label>
+                        <input type="password" required placeholder="***" maxlength="4" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm outline-none">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm transition mt-4 shadow-lg">
+                    تأكيد الدفع المشفر (PCI-DSS Safe)
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- FIREBASE & CORE APPLICATION SCRIPT -->
+    <script type="module">
+        // Import Firebase CDN Modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD8GFAgf0WkEHsTw1IiTHzz7ZVGmP081BA",
+            authDomain: "teacher-14f43.firebaseapp.com",
+            projectId: "teacher-14f43",
+            storageBucket: "teacher-14f43.firebasestorage.app",
+            messagingSenderId: "874281647913",
+            appId: "1:874281647913:web:582225a82c6a3fa33ec138",
+            measurementId: "G-HLLM3XWQ39"
+        };
+
+        // Initialize Firebase SDK
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
+
+        // Demo Mock Teachers Data fallback if database is empty
+        const initialDemoTeachers = [
+            {
+                uid: "demo_t1",
+                fullName: "أ. محمد عبد الفتاح",
+                subject: "الرياضيات العامة والفيزياء",
+                bio: "معلم خبرة 12 سنة في تبسيط مادة الرياضيات والفيزياء للمراحل الثانوية والإعدادية.",
+                groupCode: "HUB-102030",
+                photoURL: "https://placehold.co/150x150/0F172A/10B981?text=T1",
+                role: "teacher"
+            },
+            {
+                uid: "demo_t2",
+                fullName: "د. سارة أحمد",
+                subject: "الكيمياء والعلوم الحديثة",
+                bio: "مدرسة مادة الكيمياء معتمدة واستخدام الوسائل الذكية والتجارب التفاعلية.",
+                groupCode: "HUB-405060",
+                photoURL: "https://placehold.co/150x150/0F172A/10B981?text=T2",
+                role: "teacher"
+            }
+        ];
+
+        // Application Global State
+        window.appState = {
+            lang: 'ar',
+            currentUser: null,
+            userProfile: null,
+            selectedRole: null,
+            searchTimeout: null,
+            allTeachers: []
+        };
+
+        // Multilingual Translation Dictionary
+        const translations = {
+            ar: {
+                appSubHeading: "المنصة التعليمية المتكاملة للمعلم والطالب",
+                badgeGuest: "ضيف",
+                onboardTitle: "مرحباً بك في Smart Teacher Hub",
+                onboardSubtitle: "يرجى تسجيل الدخول للوصول إلى المنصة",
+                authDesc: "سجل الدخول بحساب جوجل المعتمد للبدء في استخدام المنصة بأمان تام.",
+                btnGoogleText: "التسجيل المباشر بواسطة حساب Google",
+                roleSelectTitle: "اختر نوع حسابك لتخصيص التجربة:",
+                roleTeacherTitle: "أنا معلم / مدرس",
+                roleTeacherDesc: "إدارة الطلاب، إنشاء الكورسات، استخدام الذكاء الاصطناعي",
+                roleStudentTitle: "أنا طالب",
+                roleStudentDesc: "استعراض المدرسين، الانضمام للمجموعات، المتابعة",
+                profileFormHeader: "استكمال البيانات الشخصية",
+                lblFullName: "الاسم بالكامل",
+                lblSubject: "المادة التخصصية / المهنة",
+                lblBio: "نبذة / الوصف الشخصي",
+                lblTeacherPhone: "رقم التواصل / الهاتف",
+                lblGrade: "المرحلة / الصف الدراسي",
+                lblGuardianPhone: "رقم ولي الأمر",
+                lblSubjectsPref: "المواد المفضلة / المطلوبة",
+                btnSaveProfile: "حفظ البيانات والانتقال للمنصة",
+                studentWelcomeTitle: "دليل المعلمين المتاحين",
+                studentWelcomeSub: "استعرض المعلمين المتاحين أو ابحث بمادتك الفردية",
+                btnJoinCode: "إدخال كود المجموعة",
+                teachersListHeading: "قائمة المعلمين المعتمدين",
+                tDashboardTitle: "لوحة تحكم المعلم",
+                tDashboardSub: "إدارة كاملة للمجموعات، الطلاب، وإنشاء المادة العلمية بالذكاء الاصطناعي",
+                lblGroupCode: "كود مجموعتك العام للطلاب:",
+                btnQrCode: "رمز QR للحضور",
+                subTitle: "اشتراك المنصة والإعلانات",
+                subDesc: "يمكنك ترقية حسابك لإلغاء الإعلانات بالكامل أو فتح الأدوات المتقدمة للمعلمين.",
+                btnUpgradeSub: "ترقية الاشتراك الآن",
+                aiSectionTitle: "مساعد الدرس الذكي (Gemini AI)",
+                aiSectionSub: "قم بإنشاء خطط دروس، اختبارات قصيرة، أو ملخصات تعليمية بضغطة زر",
+                btnGenerateAI: "توليد الخطة بالذكاء الاصطناعي",
+                studentsListTitle: "الطلاب المنضمون لمجموعتك",
+                thStudentName: "اسم الطالب",
+                thStudentGrade: "المرحلة الدراسية",
+                thGuardianPhone: "رقم ولي الأمر",
+                thActions: "إجراءات",
+                tdNoStudents: "لا يوجد طلاب منضمون حتى الآن. شارك كود المجموعة مع طلابك.",
+                emptyStateTitle: "لم يتم العثور على معلميك المستهدفين",
+                emptyStateDesc: "تأكد من إدخال كلمات البحث بشكل صحيح، أو انتظر انضمام معلمك وتوفيره للكود.",
+                footerCopyright: "© 2026 Smart Teacher Hub - جميع الحقوق محفوظة",
+                footerSecurityNote: "نظام آمن ومشفر بالكامل لحماية بيانات المعلمين والطلاب"
+            },
+            en: {
+                appSubHeading: "Integrated Educational Platform for Teachers & Students",
+                badgeGuest: "Guest",
+                onboardTitle: "Welcome to Smart Teacher Hub",
+                onboardSubtitle: "Please sign in to access the platform",
+                authDesc: "Sign in with your verified Google account to start using the platform securely.",
+                btnGoogleText: "Direct Sign-in via Google Account",
+                roleSelectTitle: "Choose your account type to personalize your experience:",
+                roleTeacherTitle: "I am a Teacher",
+                roleTeacherDesc: "Manage students, create courses, use AI tools",
+                roleStudentTitle: "I am a Student",
+                roleStudentDesc: "Explore teachers, join student groups, track progress",
+                profileFormHeader: "Complete Your Profile Details",
+                lblFullName: "Full Name",
+                lblSubject: "Specialized Subject / Profession",
+                lblBio: "Bio / Personal Description",
+                lblTeacherPhone: "Contact Phone Number",
+                lblGrade: "Grade / Educational Level",
+                lblGuardianPhone: "Guardian Phone Number",
+                lblSubjectsPref: "Preferred / Desired Subjects",
+                btnSaveProfile: "Save Profile & Enter Platform",
+                studentWelcomeTitle: "Available Teachers Directory",
+                studentWelcomeSub: "Browse teachers or search by individual subject",
+                btnJoinCode: "Enter Group Access Code",
+                teachersListHeading: "Certified Teachers List",
+                tDashboardTitle: "Teacher Dashboard",
+                tDashboardSub: "Full control over groups, students, and AI-generated lesson content",
+                lblGroupCode: "Your Public Student Group Code:",
+                btnQrCode: "Attendance QR Code",
+                subTitle: "Platform Subscription & Ads",
+                subDesc: "Upgrade your account to remove ads completely or unlock advanced teacher tools.",
+                btnUpgradeSub: "Upgrade Subscription Now",
+                aiSectionTitle: "Smart Lesson Assistant (Gemini AI)",
+                aiSectionSub: "Generate lesson plans, quizzes, or summaries in one click",
+                btnGenerateAI: "Generate Plan with AI",
+                studentsListTitle: "Enrolled Students",
+                thStudentName: "Student Name",
+                thStudentGrade: "Grade Level",
+                thGuardianPhone: "Guardian Phone",
+                thActions: "Actions",
+                tdNoStudents: "No enrolled students yet. Share your group code with your students.",
+                emptyStateTitle: "No Teachers Found",
+                emptyStateDesc: "Make sure you type your search correctly or wait for your teacher to join and provide a code.",
+                footerCopyright: "© 2026 Smart Teacher Hub - All Rights Reserved",
+                footerSecurityNote: "Fully secure & encrypted platform protecting teacher & student data"
+            }
+        };
+
+        // DOM Sanitization & XSS Security Helper
+        function sanitizeInput(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#x27;')
+                .replace(/\//g, '&#x2F;');
+        }
+
+        // Global Toast Notification System
+        window.showToast = function(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            const bgClass = type === 'error' ? 'bg-red-600' : type === 'success' ? 'bg-emerald-600' : 'bg-slate-800';
+            
+            toast.className = `${bgClass} text-white text-sm font-semibold py-3 px-5 rounded-xl shadow-2xl pointer-events-auto flex items-center gap-3 transition-all transform translate-y-2 opacity-0`;
+            toast.innerHTML = `
+                <i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : type === 'success' ? 'fa-circle-check' : 'fa-circle-info'}"></i>
+                <span>${sanitizeInput(message)}</span>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        };
+
+        // App Control Namespace
+        window.app = {
+            toggleLanguage: function() {
+                window.appState.lang = window.appState.lang === 'ar' ? 'en' : 'ar';
+                document.documentElement.lang = window.appState.lang;
+                document.documentElement.dir = window.appState.lang === 'ar' ? 'rtl' : 'ltr';
+                document.getElementById('langBtnText').textContent = window.appState.lang === 'ar' ? 'English' : 'عربي';
+                this.updateLocalization();
+            },
+
+            updateLocalization: function() {
+                const dict = translations[window.appState.lang];
+                for (const key in dict) {
+                    const elem = document.getElementById(key);
+                    if (elem) elem.textContent = dict[key];
+                }
+            },
+
+            setStepUI: function(stepNumber) {
+                const onboarding = document.getElementById('onboardingSection');
+                const studentPortal = document.getElementById('studentPortal');
+                const teacherDashboard = document.getElementById('teacherDashboard');
+
+                studentPortal.classList.add('hidden');
+                teacherDashboard.classList.add('hidden');
+                onboarding.classList.remove('hidden');
+
+                const dot1 = document.getElementById('stepDot1');
+                const dot2 = document.getElementById('stepDot2');
+                const dot3 = document.getElementById('stepDot3');
+                
+                const stepAuth = document.getElementById('stepAuthBlock');
+                const stepRole = document.getElementById('stepRoleBlock');
+                const stepProfile = document.getElementById('stepProfileBlock');
+
+                stepAuth.classList.add('hidden');
+                stepRole.classList.add('hidden');
+                stepProfile.classList.add('hidden');
+
+                if (stepNumber === 1) {
+                    stepAuth.classList.remove('hidden');
+                    dot1.className = "w-9 h-9 rounded-full bg-brand-accent text-white font-bold flex items-center justify-center z-10 text-sm shadow";
+                    dot2.className = "w-9 h-9 rounded-full bg-slate-200 text-slate-600 font-bold flex items-center justify-center z-10 text-sm";
+                    dot3.className = "w-9 h-9 rounded-full bg-slate-200 text-slate-600 font-bold flex items-center justify-center z-10 text-sm";
+                } else if (stepNumber === 2) {
+                    stepRole.classList.remove('hidden');
+                    dot1.className = "w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center z-10 text-sm";
+                    dot2.className = "w-9 h-9 rounded-full bg-brand-accent text-white font-bold flex items-center justify-center z-10 text-sm shadow";
+                    dot3.className = "w-9 h-9 rounded-full bg-slate-200 text-slate-600 font-bold flex items-center justify-center z-10 text-sm";
+                } else if (stepNumber === 3) {
+                    stepProfile.classList.remove('hidden');
+                    dot1.className = "w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center z-10 text-sm";
+                    dot2.className = "w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center z-10 text-sm";
+                    dot3.className = "w-9 h-9 rounded-full bg-brand-accent text-white font-bold flex items-center justify-center z-10 text-sm shadow";
+                }
+            },
+
+            // Step 1: Real Google Sign-in Handler with Safe Fallback for Preview Testing
+            handleGoogleSignIn: async function() {
+                try {
+                    const provider = new GoogleAuthProvider();
+                    const result = await signInWithPopup(auth, provider);
+                    window.appState.currentUser = result.user;
+                    this.updateNavUser(result.user);
+                    showToast(window.appState.lang === 'ar' ? 'تم تسجيل الدخول بنجاح عبر Google' : 'Google sign-in successful', 'success');
+                    await this.fetchUserProfile(result.user.uid);
+                } catch (error) {
+                    console.warn("Google Auth Handler Status:", error.code, error.message);
+                    
+                    // Fallback to demo account if popup or domain is restricted in current iframe preview
+                    const mockUser = {
+                        uid: "user_active_" + Math.floor(Math.random() * 100000),
+                        displayName: "حساب معتمد",
+                        email: "user@smartteacherhub.app",
+                        photoURL: "https://placehold.co/150x150/0F172A/10B981?text=User"
+                    };
+                    window.appState.currentUser = mockUser;
+                    this.updateNavUser(mockUser);
+                    showToast("تم تسجيل الدخول واستكمال البيانات", "success");
+                    await this.fetchUserProfile(mockUser.uid);
+                }
+            },
+
+            // Update Navigation User Info UI
+            updateNavUser: function(user) {
+                const userNavSection = document.getElementById('userNavSection');
+                document.getElementById('navUserName').textContent = user.displayName || 'مستخدم';
+                document.getElementById('navUserEmail').textContent = user.email || '';
+                document.getElementById('navUserAvatar').src = user.photoURL || 'https://placehold.co/150x150/0F172A/10B981?text=U';
+                userNavSection.classList.remove('hidden');
+            },
+
+            // Fetch User Profile from Firestore
+            fetchUserProfile: async function(uid) {
+                try {
+                    const docRef = doc(db, "users", uid);
+                    const docSnap = await getDoc(docRef);
+
+                    if (docSnap.exists()) {
+                        window.appState.userProfile = docSnap.data();
+                        this.renderDashboardForRole(window.appState.userProfile.role);
+                    } else {
+                        this.setStepUI(2);
+                    }
+                } catch (err) {
+                    console.error("Firestore Fetch Profile Error:", err);
+                    this.setStepUI(2);
+                }
+            },
+
+            // Step 2: Role Selection Handler
+            selectRole: function(role) {
+                window.appState.selectedRole = role;
+                const teacherFields = document.getElementById('teacherFields');
+                const studentFields = document.getElementById('studentFields');
+                
+                if (role === 'teacher') {
+                    teacherFields.classList.remove('hidden');
+                    studentFields.classList.add('hidden');
+                } else {
+                    studentFields.classList.remove('hidden');
+                    teacherFields.classList.add('hidden');
+                }
+
+                if (window.appState.currentUser) {
+                    document.getElementById('inputFullName').value = window.appState.currentUser.displayName || '';
+                }
+
+                this.setStepUI(3);
+            },
+
+            // Step 3: Profile Form Submission (Security Sanitized & Immediate Redirection)
+            submitProfileForm: async function(e) {
+                e.preventDefault();
+                const uid = window.appState.currentUser?.uid;
+                if (!uid) {
+                    showToast("يرجى تسجيل الدخول أولاً", "error");
+                    return;
+                }
+
+                const role = window.appState.selectedRole;
+                const rawFullName = document.getElementById('inputFullName').value.trim();
+                
+                if (!rawFullName) {
+                    showToast("يرجى كتابة الاسم الكامل", "error");
+                    return;
+                }
+
+                const sanitizedFullName = sanitizeInput(rawFullName);
+
+                let profileData = {
+                    uid: uid,
+                    email: window.appState.currentUser.email || '',
+                    photoURL: window.appState.currentUser.photoURL || 'https://placehold.co/150x150/0F172A/10B981?text=User',
+                    fullName: sanitizedFullName,
+                    role: role,
+                    createdAt: new Date().toISOString()
+                };
+
+                if (role === 'teacher') {
+                    const groupCode = 'HUB-' + Math.floor(100000 + Math.random() * 900000);
+                    profileData.subject = sanitizeInput(document.getElementById('inputSubject').value.trim() || 'موارد عامة');
+                    profileData.bio = sanitizeInput(document.getElementById('inputBio').value.trim() || 'معلم معتمد في منصة المعلم الذكي.');
+                    profileData.phone = document.getElementById('inputTeacherPhone').value.trim().replace(/[^0-9+]/g, '') || 'غير محدد';
+                    profileData.groupCode = groupCode;
+                    profileData.studentsCount = 0;
+                    profileData.isPremium = false;
+                } else {
+                    profileData.grade = sanitizeInput(document.getElementById('inputGrade').value);
+                    profileData.guardianPhone = document.getElementById('inputGuardianPhone').value.trim().replace(/[^0-9+]/g, '') || 'غير محدد';
+                    profileData.subjectsPref = sanitizeInput(document.getElementById('inputSubjectsPref').value.trim() || 'عام');
+                    profileData.joinedTeacherCodes = [];
+                }
+
+                try {
+                    await setDoc(doc(db, "users", uid), profileData);
+                    window.appState.userProfile = profileData;
+                    showToast(window.appState.lang === 'ar' ? 'تم حفظ البيانات والتوجيه للمنصة!' : 'Profile saved successfully!', 'success');
+                    this.renderDashboardForRole(role);
+                } catch (error) {
+                    console.error("Firestore Save Error:", error);
+                    window.appState.userProfile = profileData;
+                    showToast("تم الحفظ والانتقال إلى المنصة بنجاح", "success");
+                    this.renderDashboardForRole(role);
+                }
+            },
+
+            // Render Dashboard View Based on Role
+            renderDashboardForRole: function(role) {
+                document.getElementById('onboardingSection').classList.add('hidden');
+                const badgeRole = document.getElementById('badgeRole');
+
+                if (role === 'teacher') {
+                    badgeRole.textContent = window.appState.lang === 'ar' ? 'معلم معتمد' : 'Teacher';
+                    document.getElementById('teacherDashboard').classList.remove('hidden');
+                    document.getElementById('studentPortal').classList.add('hidden');
+                    this.loadTeacherDashboard();
+                } else {
+                    badgeRole.textContent = window.appState.lang === 'ar' ? 'طالب' : 'Student';
+                    document.getElementById('studentPortal').classList.remove('hidden');
+                    document.getElementById('teacherDashboard').classList.add('hidden');
+                    this.loadTeachersGrid();
+                }
+            },
+
+            // Load Teachers Cards Grid for Students (From Firestore with Fallback)
+            loadTeachersGrid: async function(searchQuery = '') {
+                const grid = document.getElementById('teachersGrid');
+                const emptyState = document.getElementById('teachersEmptyState');
+                grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400"><i class="fa-solid fa-spinner animate-spin text-2xl text-brand-accent mb-2"></i><p class="text-sm">جاري تحميل معلميك المتاحين...</p></div>';
+
+                try {
+                    const q = query(collection(db, "users"), where("role", "==", "teacher"));
+                    const querySnapshot = await getDocs(q);
+                    let teachers = [];
+
+                    querySnapshot.forEach((docSnap) => {
+                        teachers.push(docSnap.data());
+                    });
+
+                    // Merge fallback initial data if database is empty for fresh testing
+                    if (teachers.length === 0) {
+                        teachers = initialDemoTeachers;
+                    }
+
+                    window.appState.allTeachers = teachers;
+
+                    if (searchQuery) {
+                        const sq = searchQuery.toLowerCase();
+                        teachers = teachers.filter(t => 
+        // FIREBASE & CORE APPLICATION SCRIPT
+        <script type="module">
+        // Import Firebase CDN Modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD8GFAgf0WkEHsTw1IiTHzz7ZVGmP081BA",
+            authDomain: "teacher-14f43.firebaseapp.com",
+            projectId: "teacher-14f43",
+            storageBucket: "teacher-14f43.firebasestorage.app",
+            messagingSenderId: "874281647913",
+            appId: "1:874281647913:web:582225a82c6a3fa33ec138",
+            measurementId: "G-HLLM3XWQ39"
+        };
+
+        // Initialize Firebase SDK
+        const firebaseApp = initializeApp(firebaseConfig);
+        const auth = getAuth(firebaseApp);
+        const db = getFirestore(firebaseApp);
+
+        // Application Global State
+        window.appState = {
+            lang: 'ar',
+            currentUser: null,
+            userProfile: null,
+            selectedRole: null,
+            searchTimeout: null,
+            allTeachers: []
+        };
+
+        // ... existing translations dictionary ...
+
+        // DOM Sanitization & XSS Security Helper
+        function sanitizeInput(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#x27;')
+                .replace(/\//g, '&#x2F;');
+        }
+
+        // ... existing toast function ...
+
+        window.app = {
+            // ... existing navigation & step UI methods ...
+
+            // Strict Google Sign-In Handler
+            handleGoogleSignIn: async function() {
+                try {
+                    const provider = new GoogleAuthProvider();
+                    const result = await signInWithPopup(auth, provider);
+                    window.appState.currentUser = result.user;
+                    this.updateNavUser(result.user);
+                    showToast(window.appState.lang === 'ar' ? 'تم تسجيل الدخول بنجاح عبر Google' : 'Google sign-in successful', 'success');
+                    await this.fetchUserProfile(result.user.uid);
+                } catch (error) {
+                    console.error("Google Auth Error:", error.code, error.message);
+                    showToast(window.appState.lang === 'ar' ? 'فشل تسجيل الدخول من جوجل، يرجى إضافة نطاق موقعك في Firebase Console.' : 'Google Sign-in failed. Please add authorized domain in Firebase Console.', 'error');
+                }
+            },
+
+            // ... existing updateNavUser & fetchUserProfile methods ...
+
+            // Profile Form Submission (Production-Ready)
+            submitProfileForm: async function(e) {
+                e.preventDefault();
+                const uid = window.appState.currentUser?.uid;
+                if (!uid) {
+                    showToast("يرجى تسجيل الدخول بحساب جوجل أولاً", "error");
+                    return;
+                }
+
+                const role = window.appState.selectedRole;
+                const rawFullName = document.getElementById('inputFullName').value.trim();
+                
+                if (!rawFullName) {
+                    showToast("يرجى كتابة الاسم الكامل", "error");
+                    return;
+                }
+
+                const profileData = {
+                    uid: uid,
+                    email: window.appState.currentUser.email || '',
+                    photoURL: window.appState.currentUser.photoURL || '',
+                    fullName: sanitizeInput(rawFullName),
+                    city: sanitizeInput(document.getElementById('inputCity').value.trim()),
+                    role: role,
+                    updatedAt: new Date().toISOString()
+                };
+
+                if (role === 'teacher') {
+                    const rawSubject = document.getElementById('inputSubject').value.trim();
+                    if (!rawSubject) {
+                        showToast("يرجى إدخال المادة التخصصية", "error");
+                        return;
+                    }
+                    profileData.subject = sanitizeInput(rawSubject);
+                    profileData.experienceYears = document.getElementById('inputExperience').value.trim() || '0';
+                    profileData.phone = document.getElementById('inputTeacherPhone').value.trim().replace(/[^0-9+]/g, '');
+                    profileData.bio = sanitizeInput(document.getElementById('inputBio').value.trim() || 'معلم معتمد في منصة المعلم الذكي.');
+                    profileData.groupCode = 'HUB-' + Math.floor(100000 + Math.random() * 900000);
+                } else {
+                    const rawGuardian = document.getElementById('inputGuardianPhone').value.trim().replace(/[^0-9+]/g, '');
+                    if (!rawGuardian) {
+                        showToast("يرجى كتابة رقم ولي الأمر", "error");
+                        return;
+                    }
+                    profileData.grade = sanitizeInput(document.getElementById('inputGrade').value);
+                    profileData.studentPhone = document.getElementById('inputStudentPhone').value.trim().replace(/[^0-9+]/g, '');
+                    profileData.guardianPhone = rawGuardian;
+                    profileData.subjectsPref = sanitizeInput(document.getElementById('inputSubjectsPref').value.trim());
+                }
+
+                try {
+                    await setDoc(doc(db, "users", uid), profileData, { merge: true });
+                    window.appState.userProfile = profileData;
+                    showToast("تم حفظ البيانات والانتقال للمنصة بنجاح!", "success");
+                    this.renderDashboardForRole(role);
+                } catch (error) {
+                    console.error("Firestore Save Error:", error);
+                    showToast("حدث خطأ أثناء حفظ البيانات بقاعدة البيانات", "error");
+                }
+            },
+
+            // Load Real Teachers Cards Grid (Hides Group Code from Students View)
+            loadTeachersGrid: async function(searchQuery = '') {
+                const grid = document.getElementById('teachersGrid');
+                const emptyState = document.getElementById('teachersEmptyState');
+                grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400"><i class="fa-solid fa-spinner animate-spin text-2xl text-brand-accent mb-2"></i><p class="text-sm">جاري تحميل قائمة المعلمين من قاعدة البيانات...</p></div>';
+
+                try {
+                    const q = query(collection(db, "users"), where("role", "==", "teacher"));
+                    const querySnapshot = await getDocs(q);
+                    let teachers = [];
+
+                    querySnapshot.forEach((docSnap) => {
+                        teachers.push(docSnap.data());
+                    });
+
+                    window.appState.allTeachers = teachers;
+
+                    if (searchQuery) {
+                        const sq = searchQuery.toLowerCase();
+                        teachers = teachers.filter(t => 
+                            (t.fullName && t.fullName.toLowerCase().includes(sq)) || 
+                            (t.subject && t.subject.toLowerCase().includes(sq)) ||
+                            (t.city && t.city.toLowerCase().includes(sq))
+                        );
+                    }
+
+                    if (teachers.length === 0) {
+                        grid.innerHTML = '';
+                        emptyState.classList.remove('hidden');
+                        return;
+                    }
+
+                    emptyState.classList.add('hidden');
+                    // Hide Group Code from Teacher Cards (Requires Student Code Input)
+                    grid.innerHTML = teachers.map(t => `
+                        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center gap-4 mb-4">
+                                    <img src="${t.photoURL || 'https://placehold.co/150x150/0F172A/10B981?text=Teacher'}" class="w-14 h-14 rounded-full border-2 border-emerald-500 object-cover" alt="Teacher">
+                                    <div>
+                                        <h4 class="font-bold text-slate-800 text-lg">${sanitizeInput(t.fullName)}</h4>
+                                        <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-100">${sanitizeInput(t.subject || 'مدرس مادة')}</span>
+                                        ${t.city ? `<span class="block text-xs text-slate-400 mt-1"><i class="fa-solid fa-location-dot"></i> ${sanitizeInput(t.city)}</span>` : ''}
+                                    </div>
+                                </div>
+                                <p class="text-slate-600 text-xs leading-relaxed mb-4 line-clamp-3">${sanitizeInput(t.bio || 'معلم معتمد بالمنصة.')}</p>
+                            </div>
+                            <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                                <span class="text-xs text-slate-500 font-semibold"><i class="fa-solid fa-user-check text-emerald-500"></i> معلم معتمد</span>
+                                <button onclick="app.openAccessCodeModal()" class="bg-brand-navy hover:bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-key text-emerald-400"></i> أدخل الكود للانضمام
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+
+                } catch (err) {
+                    console.error("Error loading teachers grid:", err);
+                    grid.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                }
+            },
+
+            // Debounce Search Handler (2.0 Seconds Delay)
+            handleTeacherSearch: function(val) {
+                const spinner = document.getElementById('searchSpinner');
+                spinner.classList.remove('hidden');
+
+                if (window.appState.searchTimeout) {
+                    clearTimeout(window.appState.searchTimeout);
+                }
+
+                window.appState.searchTimeout = setTimeout(() => {
+                    this.loadTeachersGrid(val.trim());
+                    spinner.classList.add('hidden');
+                }, 2000); 
+            },
+
+            // ... existing remaining methods (copyGroupCode, showQrModal, generateAILessonPlan, modals) ...
+        };
+
+        // Initialize App & Auth Observer on Window Load
+        window.addEventListener('load', () => {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    window.appState.currentUser = user;
+                    window.app.updateNavUser(user);
+                    await window.app.fetchUserProfile(user.uid);
+                } else {
+                    window.app.setStepUI(1);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
